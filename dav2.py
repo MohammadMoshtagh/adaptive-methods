@@ -1,6 +1,3 @@
-"""
-PyTorch implementation of the DoG/LDoG optimizers (Ivgi et al., 2023)
-"""
 import logging
 from typing import Optional
 
@@ -47,9 +44,9 @@ class DualAveragingV2(Optimizer):
         return state_dict
 
     def load_state_dict(self, state_dict: dict) -> None:
-        super(DoG, self).load_state_dict(state_dict)
+        super(DualAveragingV2, self).load_state_dict(state_dict)
         self._first_step = state_dict['state']['_first_step']
-        logger.info(f'loaded DoG state dict')
+        logger.info(f'loaded DA state dict')
         cuda = self.param_groups[0]['params'][0].device
         for group in self.param_groups:
             cuda_buffers = {'init_buffer'}
@@ -117,9 +114,8 @@ class DualAveragingV2(Optimizer):
             group['G'] += torch.stack([(p.grad.detach() ** 2).sum() for p in group['params']]).sum()
             group['s'] += torch.stack([(curr_d * p.grad.detach()) for p in group['params']])[0]
         assert group['G'] > 0, \
-            f'DoG cannot work when G is not strictly positive. got: {group["G"]}'
+            f'Optimizer cannot work when G is not strictly positive. got: {group["G"]}'
         group['eta'] = [(1 / torch.sqrt(group['G'])) * group['s']] * len(group['params'])
-        # print(group['s'])
 
     def _override_init_eta_if_needed(self, group):
         # Override init_eta if needed
